@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
@@ -50,10 +51,10 @@ public class InputManager : MonoBehaviour
 	
 	private void CheckCrouchInput()
 	{
-		bool isPressCrouchInput = Input.GetKeyDown(KeyCode.LeftControl);
+		bool isPressCrouchInput = Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl);
 		if (isPressCrouchInput)
 		{
-			//Debug.Log("Crouch");
+			InputEventManager.FireOnCrouchInput();
 		}
 	}
 	
@@ -80,7 +81,7 @@ public class InputManager : MonoBehaviour
 		bool isPressGlideInput = Input.GetKeyDown(KeyCode.G);
 		if (isPressGlideInput)
 		{
-			//Debug.Log("Glide");
+				InputEventManager.FireOnGlideInput();
 		}
 	}
 	
@@ -90,6 +91,7 @@ public class InputManager : MonoBehaviour
 		if (isPressCancelInput)
 		{
 			InputEventManager.FireOnCancelClimb();
+			InputEventManager.FireOnCancelGlide();
 		}
 	}
 	
@@ -98,7 +100,7 @@ public class InputManager : MonoBehaviour
 		bool isPressPunchInput = Input.GetKeyDown(KeyCode.Mouse0);
 		if (isPressPunchInput)
 		{
-			//Debug.Log("Punch");
+			InputEventManager.FireOnPunchInput();
 		}
 	}
 	

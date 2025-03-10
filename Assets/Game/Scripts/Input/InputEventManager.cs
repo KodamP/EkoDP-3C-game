@@ -34,6 +34,30 @@ public static class InputEventManager
 	{
 		OnCancelClimb?.Invoke();
 	}
+	
+	public static Action OnCrouchInput;
+	public static void FireOnCrouchInput()
+	{
+		OnCrouchInput?.Invoke();
+	}
+
+	public static Action OnGlideInput;
+	public static void FireOnGlideInput()
+	{
+		OnGlideInput?.Invoke();
+	}
+
+	public static Action OnCancelGlide;
+	public static void FireOnCancelGlide()
+	{
+		OnCancelGlide?.Invoke();
+	}
+
+	public static Action OnPunchInput;
+	public static void FireOnPunchInput()
+	{
+		OnPunchInput?.Invoke();
+	}
 
 	#endregion
 	

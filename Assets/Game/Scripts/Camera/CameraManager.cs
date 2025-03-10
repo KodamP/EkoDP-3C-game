@@ -53,6 +53,7 @@ public class CameraManager : MonoBehaviour
                 _fpsCamera.gameObject.SetActive(false);
                 break;
         }
+        PlayerEventManager.FireOnChangePOV();
     }
 
     public void SetTPSFieldOfView(float fieldOfView)
