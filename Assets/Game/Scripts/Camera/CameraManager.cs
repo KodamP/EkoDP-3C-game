@@ -37,6 +37,8 @@ public class CameraManager : MonoBehaviour
         }
     }
 
+    [SerializeField] private PlayerMovement _playerMovement;
+    
     public void SwitchCamera()
     {
         //Siapa tau bakal ada kamera jenis lain, biar ga if else beranak pinak.
@@ -44,6 +46,9 @@ public class CameraManager : MonoBehaviour
         {
             case CameraState.ThirdPerson:
                 CameraState = CameraState.FirstPerson;
+                //solving camera rotation
+                CinemachinePOV pov = _fpsCamera.GetCinemachineComponent<CinemachinePOV>();
+                pov.m_HorizontalAxis.Value = _playerMovement.transform.rotation.eulerAngles.y;
                 _tpsCamera.gameObject.SetActive(false);
                 _fpsCamera.gameObject.SetActive(true);
                 break;

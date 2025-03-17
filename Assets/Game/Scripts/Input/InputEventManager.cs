@@ -70,4 +70,14 @@ public static class InputEventManager
 	}
 
 	#endregion
+
+	#region MyRegion
+
+	public static Action OnMainMenuInput;
+	public static void FireOnMainMenuInput()
+	{
+		OnMainMenuInput?.Invoke();
+	}
+
+	#endregion
 }

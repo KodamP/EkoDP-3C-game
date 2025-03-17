@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Data.Common;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -20,6 +21,7 @@ public class PlayerMovement : MonoBehaviour
 	
 	[Header("Crouch")]
 	[SerializeField] private float _crouchSpeed;
+	[SerializeField] private GameObject _tunnelDetector;
 	
 	[Header("Stair Climb")]
 	[SerializeField] private Vector3 _upperStepOffset;
@@ -37,8 +39,7 @@ public class PlayerMovement : MonoBehaviour
 	[SerializeField] private float _glideSpeed;
 	[SerializeField] private float _airDrag;
 	[SerializeField] private Vector3 _glideRotationSpeed;
-	[SerializeField] private float _minGlideRotationX;
-	[SerializeField] private float _maxGlideRotationX;
+	[SerializeField] private float _clampGlideRotationX;
 	
 	[Header("Punch")]
 	[SerializeField] private float _resetComboInterval;
@@ -56,8 +57,13 @@ public class PlayerMovement : MonoBehaviour
 	private Rigidbody _rigidbody;
 	//Jump
 	private bool _isGrounded;
+	//Crouch
+	private bool _isTunnel = false;
+	//Glide
+	private Vector3 rotationDegree = Vector3.zero;
 	//Climb
 	private PlayerStance _playerStance;
+	private float _startClimbPosition;
 	//Punch
 	private bool _isPunching;
 	private int _combo = 0;
@@ -153,23 +159,32 @@ public class PlayerMovement : MonoBehaviour
 			Vector3 horizontal = axisDirection.x * transform.right;
 			Vector3 vertical = axisDirection.y * transform.up;
 			movementDirection = horizontal + vertical;
-			_rigidbody.AddForce(movementDirection * (Time.deltaTime * _climbSpeed));
+			//_rigidbody.AddForce(movementDirection * (Time.deltaTime * _climbSpeed));
 			PlayerEventManager.FireOnAnimationClimb(axisDirection);
 		}
 		else if (isPlayerGliding)
 		{
-			Vector3 rotationDegree = transform.rotation.eulerAngles;
-			rotationDegree.x += _glideRotationSpeed.x * axisDirection.y * Time.deltaTime;
-			rotationDegree.x = Mathf.Clamp(rotationDegree.x, _minGlideRotationX, _maxGlideRotationX);
-			rotationDegree.y += _glideRotationSpeed.y * axisDirection.x * Time.deltaTime;
-			rotationDegree.z += _glideRotationSpeed.z * axisDirection.x * Time.deltaTime;
-			transform.rotation = Quaternion.Euler(rotationDegree);
+			switch (_cameraManager.CameraState)
+			{
+				case CameraState.ThirdPerson:
+					//rotationDegree.x += _glideRotationSpeed.x * axisDirection.y * Time.deltaTime;
+					rotationDegree.y += _glideRotationSpeed.y * axisDirection.x * Time.deltaTime;
+					transform.rotation = Quaternion.Euler(axisDirection.y * _clampGlideRotationX, rotationDegree.y, 0f);
+					break;
+				
+				case CameraState.FirstPerson:
+					//rotationDegree.x += _glideRotationSpeed.x * axisDirection.y * Time.deltaTime;
+					rotationDegree.y += _cameraTransform.eulerAngles.x * Time.deltaTime;
+					transform.rotation = Quaternion.Euler(axisDirection.y * _clampGlideRotationX, 
+						_cameraTransform.eulerAngles.y, 0f);
+					break;
+			}
 		}
 	}
 	
 	private void Sprint(bool isSprint)
 	{
-		if (isSprint)
+		if (isSprint && _playerStance != PlayerStance.Crouch)
 		{
 			if (_speed < _sprintSpeed)
 			{
@@ -190,7 +205,7 @@ public class PlayerMovement : MonoBehaviour
 		if (_isGrounded)
 		{
 			Vector3 jumpDirection = Vector3.up;
-			_rigidbody.AddForce(jumpDirection * (_jumpForce * _jumpForce * Time.deltaTime));
+			_rigidbody.AddForce(jumpDirection * (_jumpForce /* Time.deltaTime*/));
 			PlayerEventManager.FireOnAnimationJump();
 		}
 	}
@@ -222,7 +237,7 @@ public class PlayerMovement : MonoBehaviour
 		bool isInFrontOfClimbingWall = Physics.Raycast(_climbDetector.position, transform.forward, 
 			out RaycastHit hit, _climbCheckDistance, _climbableLayer);
 		bool isNotClimbing = _playerStance != PlayerStance.Climb;
-		if (isInFrontOfClimbingWall && _isGrounded && isNotClimbing)
+		if (isInFrontOfClimbingWall && _isGrounded && isNotClimbing && _playerStance != PlayerStance.Crouch)
 		{
 			Vector3 offset = (transform.forward * _climbOffset.z) + (Vector3.up * _climbOffset.y);
 			transform.position = hit.point - offset;
@@ -234,6 +249,8 @@ public class PlayerMovement : MonoBehaviour
 			_cameraManager.SetTPSFieldOfView(70);
 			PlayerEventManager.FireOnSetClimbing(true);
 			_collider.center = Vector3.up * 1.3f;
+			_animator.applyRootMotion = true;
+			_startClimbPosition = transform.position.z;
 		}
 	}
 
@@ -243,17 +260,18 @@ public class PlayerMovement : MonoBehaviour
 		{
 			_playerStance = PlayerStance.Stand;
 			_rigidbody.useGravity = true;
-			transform.position -= transform.forward * 1f;
+			transform.position -= transform.forward * 0.2f;
 			_cameraManager.SetFPSClampedCamera(false, transform.rotation.eulerAngles);
 			_cameraManager.SetTPSFieldOfView(40);
 			PlayerEventManager.FireOnSetClimbing(false);
 			_collider.center = Vector3.up * 0.9f;
+			_animator.applyRootMotion = false;
 		}
 	}
-
-	//Buat cek apabila player keluar dari climbing wall, maka otomatis CancelClimb.
+	
 	private void DropFromClimbableWall()
 	{
+		//Buat cek apabila player keluar dari climbing wall, maka otomatis CancelClimb.
 		if (_playerStance == PlayerStance.Climb)
 		{
 			bool isInFrontOfClimbingWall = Physics.Raycast(_climbDetector.position, transform.forward, 
@@ -265,6 +283,20 @@ public class PlayerMovement : MonoBehaviour
 		}
 	}
 
+	//cek apakah player berada di tunnel ketika sedang crouch
+	private void OnTriggerEnter(Collider collider)
+	{
+		if (collider.gameObject.layer == 3 || collider.gameObject.layer == 0)
+		{
+			_isTunnel = true;
+		}
+	}
+
+	private void OnTriggerExit(Collider collider)
+	{
+		_isTunnel = false;
+	}
+
 	private void Crouch()
 	{
 		if (_playerStance == PlayerStance.Stand)
@@ -274,14 +306,17 @@ public class PlayerMovement : MonoBehaviour
 			_speed = _crouchSpeed;
 			_collider.height = 1.3f;
 			_collider.center = Vector3.up * 0.66f;
+			_tunnelDetector.gameObject.SetActive(true);
+			//Debug.Log("Stance: " + _playerStance);
 		}
-		else
+		else if (_isTunnel == false && _playerStance == PlayerStance.Crouch)
 		{
 			_playerStance = PlayerStance.Stand;
 			PlayerEventManager.FireOnSetCrouch(false);
 			_speed = _walkSpeed;
 			_collider.height = 1.8f;
 			_collider.center = Vector3.up * 0.9f;
+			_tunnelDetector.gameObject.SetActive(false);
 		}
 	}
 
@@ -289,9 +324,14 @@ public class PlayerMovement : MonoBehaviour
 	{
 		if (_playerStance != PlayerStance.Glide && !_isGrounded)
 		{
+			rotationDegree = transform.rotation.eulerAngles;
 			_playerStance = PlayerStance.Glide;
 			PlayerEventManager.FireOnSetGlide(true);
-			_cameraManager.SetFPSClampedCamera(true, transform.rotation.eulerAngles);
+			//_cameraManager.SetFPSClampedCamera(true, transform.rotation.eulerAngles);
+			PlayerEventManager.FireOnAudioGliding(true);
+			_collider.direction = 2;
+			_collider.center = Vector3.up * 1f;
+			_groundDetector.transform.localPosition += new Vector3(0f, 0.5f, 0f);
 		}
 	}
 
@@ -302,6 +342,10 @@ public class PlayerMovement : MonoBehaviour
 			_playerStance = PlayerStance.Stand;
 			PlayerEventManager.FireOnSetGlide(false);
 			_cameraManager.SetFPSClampedCamera(false, transform.rotation.eulerAngles);
+			PlayerEventManager.FireOnAudioGliding(false);
+			_collider.direction = 1;
+			_collider.center = Vector3.up * 0.9f;
+			_groundDetector.transform.localPosition -= new Vector3(0f, 0.5f, 0f);
 		}
 	}
 
@@ -320,10 +364,10 @@ public class PlayerMovement : MonoBehaviour
 	
 	private void Punch()
 	{
-		if (!_isPunching && _playerStance == PlayerStance.Stand)
+		if (!_isPunching && _playerStance == PlayerStance.Stand && _isGrounded)
 		{
 			_isPunching = true;
-			if (_combo < 3)
+			if (_combo < 5)
 			{
 				_combo += 1;
 			}

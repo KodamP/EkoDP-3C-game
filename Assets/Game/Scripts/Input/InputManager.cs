@@ -103,13 +103,14 @@ public class InputManager : MonoBehaviour
 			InputEventManager.FireOnPunchInput();
 		}
 	}
-	
+
+	public Action OnMainMenuInput;
 	private void CheckMainMenuInput()
 	{
 		bool isPressMainMenuInput = Input.GetKeyDown(KeyCode.Escape);
 		if (isPressMainMenuInput)
 		{
-			//Debug.Log("Back To Main Menu");
+			InputEventManager.FireOnMainMenuInput();
 		}
 	}
 	

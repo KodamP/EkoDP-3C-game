@@ -44,13 +44,28 @@ public class PlayerAnimationController : MonoBehaviour
 		_animator.SetFloat("Velocity", velocity.magnitude * axisDirection.magnitude);
 		_animator.SetFloat("VelocityX", velocity.magnitude * axisDirection.x);
 		_animator.SetFloat("VelocityZ", velocity.magnitude * axisDirection.y);
+		//Debug.Log("Velocity: " + velocity.magnitude);
 	}
 
 	private void AnimationClimb(Vector2 axisDirection)
 	{
 		Vector3 velocity = new Vector3(_rigidbody.velocity.x, _rigidbody.velocity.y, 0);
-		_animator.SetFloat("ClimbVelocityX", velocity.magnitude * axisDirection.x);
-		_animator.SetFloat("ClimbVelocityY", velocity.magnitude * axisDirection.y);
+		// _animator.SetFloat("ClimbVelocityX", velocity.magnitude * axisDirection.x);
+		// _animator.SetFloat("ClimbVelocityY", velocity.magnitude * axisDirection.y);
+		_animator.SetFloat("ClimbVelocityX", axisDirection.x);
+		_animator.SetFloat("ClimbVelocityY", axisDirection.y);
+	}
+	
+	private void OnAnimatorMove()
+	{
+		//Untuk lock z position ketika Climbing
+		if (_animator.applyRootMotion)
+		{
+			Vector3 deltaPosition = _animator.deltaPosition;
+			deltaPosition.z = 0;
+			transform.position += deltaPosition;
+			transform.rotation *= _animator.deltaRotation;
+		}
 	}
 
 	private void AnimationJump()

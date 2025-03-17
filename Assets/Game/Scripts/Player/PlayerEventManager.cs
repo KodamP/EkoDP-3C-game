@@ -6,6 +6,9 @@ using UnityEngine;
 public static class PlayerEventManager
 {
 	public static Action<Vector2> OnAnimationMove;
+	
+	#region Animation
+
 	public static void FireOnAnimationMove(Vector2 axisDirection)
 	{
 		OnAnimationMove?.Invoke(axisDirection);
@@ -58,4 +61,16 @@ public static class PlayerEventManager
 	{
 		OnChangePOV?.Invoke();
 	}
+
+	#endregion
+
+	#region Audio
+
+	public static Action<bool> OnAudioGliding;
+	public static void FireOnAudioGliding(bool _glideSFX)
+	{
+		OnAudioGliding?.Invoke(_glideSFX);
+	}
+	
+	#endregion
 }
