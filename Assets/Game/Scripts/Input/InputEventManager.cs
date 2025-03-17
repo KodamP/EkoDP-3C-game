@@ -71,7 +71,7 @@ public static class InputEventManager
 
 	#endregion
 
-	#region MyRegion
+	#region Menu
 
 	public static Action OnMainMenuInput;
 	public static void FireOnMainMenuInput()
