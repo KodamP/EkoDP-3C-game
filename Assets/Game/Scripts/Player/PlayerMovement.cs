@@ -33,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
 	[SerializeField] private float _climbCheckDistance;
 	[SerializeField] private LayerMask _climbableLayer;
 	[SerializeField] private Vector3 _climbOffset;
-	[SerializeField] private float _climbSpeed;
+	//[SerializeField] private float _climbSpeed;
 	
 	[Header("Glide")]
 	[SerializeField] private float _glideSpeed;
@@ -205,7 +205,7 @@ public class PlayerMovement : MonoBehaviour
 		if (_isGrounded)
 		{
 			Vector3 jumpDirection = Vector3.up;
-			_rigidbody.AddForce(jumpDirection * (_jumpForce /* Time.deltaTime*/));
+			_rigidbody.AddForce(jumpDirection * _jumpForce);
 			PlayerEventManager.FireOnAnimationJump();
 		}
 	}
@@ -248,7 +248,7 @@ public class PlayerMovement : MonoBehaviour
 			_cameraManager.SetFPSClampedCamera(true, transform.rotation.eulerAngles);
 			_cameraManager.SetTPSFieldOfView(70);
 			PlayerEventManager.FireOnSetClimbing(true);
-			_collider.center = Vector3.up * 1.3f;
+			//_collider.center = Vector3.up * 1.3f;
 			_animator.applyRootMotion = true;
 			_startClimbPosition = transform.position.z;
 		}
@@ -264,7 +264,7 @@ public class PlayerMovement : MonoBehaviour
 			_cameraManager.SetFPSClampedCamera(false, transform.rotation.eulerAngles);
 			_cameraManager.SetTPSFieldOfView(40);
 			PlayerEventManager.FireOnSetClimbing(false);
-			_collider.center = Vector3.up * 0.9f;
+			_collider.center = Vector3.up * 0.8f;
 			_animator.applyRootMotion = false;
 		}
 	}
@@ -304,18 +304,17 @@ public class PlayerMovement : MonoBehaviour
 			_playerStance = PlayerStance.Crouch;
 			PlayerEventManager.FireOnSetCrouch(true);
 			_speed = _crouchSpeed;
-			_collider.height = 1.3f;
-			_collider.center = Vector3.up * 0.66f;
+			_collider.height = 1.2f;
+			_collider.center = Vector3.up * 0.6f;
 			_tunnelDetector.gameObject.SetActive(true);
-			//Debug.Log("Stance: " + _playerStance);
 		}
 		else if (_isTunnel == false && _playerStance == PlayerStance.Crouch)
 		{
 			_playerStance = PlayerStance.Stand;
 			PlayerEventManager.FireOnSetCrouch(false);
 			_speed = _walkSpeed;
-			_collider.height = 1.8f;
-			_collider.center = Vector3.up * 0.9f;
+			_collider.height = 1.6f;
+			_collider.center = Vector3.up * 0.8f;
 			_tunnelDetector.gameObject.SetActive(false);
 		}
 	}
