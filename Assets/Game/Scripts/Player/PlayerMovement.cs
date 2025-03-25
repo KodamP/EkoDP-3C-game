@@ -33,7 +33,7 @@ public class PlayerMovement : MonoBehaviour
 	[SerializeField] private float _climbCheckDistance;
 	[SerializeField] private LayerMask _climbableLayer;
 	[SerializeField] private Vector3 _climbOffset;
-	//[SerializeField] private float _climbSpeed;
+	[SerializeField] private float _climbSpeed;
 	
 	[Header("Glide")]
 	[SerializeField] private float _glideSpeed;
@@ -72,7 +72,7 @@ public class PlayerMovement : MonoBehaviour
 	private CapsuleCollider _collider;
 	//Animator
 	private Animator _animator;
-
+	
 	#region Unity Functions
 
 	private void Awake()
@@ -159,7 +159,8 @@ public class PlayerMovement : MonoBehaviour
 			Vector3 horizontal = axisDirection.x * transform.right;
 			Vector3 vertical = axisDirection.y * transform.up;
 			movementDirection = horizontal + vertical;
-			//_rigidbody.AddForce(movementDirection * (Time.deltaTime * _climbSpeed));
+			//Debug.Log("Horizontal: " + horizontal + " Vertical" + vertical);
+			_rigidbody.AddForce(movementDirection * (Time.deltaTime * _climbSpeed));
 			PlayerEventManager.FireOnAnimationClimb(axisDirection);
 		}
 		else if (isPlayerGliding)
@@ -169,13 +170,13 @@ public class PlayerMovement : MonoBehaviour
 				case CameraState.ThirdPerson:
 					//rotationDegree.x += _glideRotationSpeed.x * axisDirection.y * Time.deltaTime;
 					rotationDegree.y += _glideRotationSpeed.y * axisDirection.x * Time.deltaTime;
-					transform.rotation = Quaternion.Euler(axisDirection.y * _clampGlideRotationX, rotationDegree.y, 0f);
+					transform.rotation = Quaternion.Euler(axisDirection.y * _clampGlideRotationX - 0.1f, rotationDegree.y, 0f);
 					break;
 				
 				case CameraState.FirstPerson:
 					//rotationDegree.x += _glideRotationSpeed.x * axisDirection.y * Time.deltaTime;
 					rotationDegree.y += _cameraTransform.eulerAngles.x * Time.deltaTime;
-					transform.rotation = Quaternion.Euler(axisDirection.y * _clampGlideRotationX, 
+					transform.rotation = Quaternion.Euler(axisDirection.y * _clampGlideRotationX - 0.1f, 
 						_cameraTransform.eulerAngles.y, 0f);
 					break;
 			}
@@ -202,7 +203,7 @@ public class PlayerMovement : MonoBehaviour
 
 	private void Jump()
 	{
-		if (_isGrounded)
+		if (_isGrounded && !_isPunching)
 		{
 			Vector3 jumpDirection = Vector3.up;
 			_rigidbody.AddForce(jumpDirection * _jumpForce);
@@ -251,6 +252,7 @@ public class PlayerMovement : MonoBehaviour
 			//_collider.center = Vector3.up * 1.3f;
 			_animator.applyRootMotion = true;
 			_startClimbPosition = transform.position.z;
+			_rigidbody.drag = 2f;
 		}
 	}
 
@@ -266,6 +268,7 @@ public class PlayerMovement : MonoBehaviour
 			PlayerEventManager.FireOnSetClimbing(false);
 			_collider.center = Vector3.up * 0.8f;
 			_animator.applyRootMotion = false;
+			_rigidbody.drag = 1f;
 		}
 	}
 	
@@ -304,8 +307,8 @@ public class PlayerMovement : MonoBehaviour
 			_playerStance = PlayerStance.Crouch;
 			PlayerEventManager.FireOnSetCrouch(true);
 			_speed = _crouchSpeed;
-			_collider.height = 1.2f;
-			_collider.center = Vector3.up * 0.6f;
+			_collider.height = 1.4f;
+			_collider.center = Vector3.up * 0.7f;
 			_tunnelDetector.gameObject.SetActive(true);
 		}
 		else if (_isTunnel == false && _playerStance == PlayerStance.Crouch)
@@ -313,8 +316,8 @@ public class PlayerMovement : MonoBehaviour
 			_playerStance = PlayerStance.Stand;
 			PlayerEventManager.FireOnSetCrouch(false);
 			_speed = _walkSpeed;
-			_collider.height = 1.6f;
-			_collider.center = Vector3.up * 0.8f;
+			_collider.height = 1.8f;
+			_collider.center = Vector3.up * 0.9f;
 			_tunnelDetector.gameObject.SetActive(false);
 		}
 	}
@@ -330,7 +333,7 @@ public class PlayerMovement : MonoBehaviour
 			PlayerEventManager.FireOnAudioGliding(true);
 			_collider.direction = 2;
 			_collider.center = Vector3.up * 1f;
-			_groundDetector.transform.localPosition += new Vector3(0f, 0.5f, 0f);
+			_groundDetector.transform.localPosition += new Vector3(0f, 0.6f, 0f);
 		}
 	}
 
@@ -344,7 +347,7 @@ public class PlayerMovement : MonoBehaviour
 			PlayerEventManager.FireOnAudioGliding(false);
 			_collider.direction = 1;
 			_collider.center = Vector3.up * 0.9f;
-			_groundDetector.transform.localPosition -= new Vector3(0f, 0.5f, 0f);
+			_groundDetector.transform.localPosition -= new Vector3(0f, 0.6f, 0f);
 		}
 	}
 
