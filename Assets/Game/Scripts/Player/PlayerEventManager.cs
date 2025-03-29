@@ -72,5 +72,11 @@ public static class PlayerEventManager
 		OnAudioGliding?.Invoke(_glideSFX);
 	}
 	
+	public static Action OnObjectBreaking;
+	public static void FireOnObjectBreaking()
+    {
+        OnObjectBreaking?.Invoke();
+    }
+	
 	#endregion
 }

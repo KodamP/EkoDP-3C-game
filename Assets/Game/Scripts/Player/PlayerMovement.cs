@@ -34,6 +34,7 @@ public class PlayerMovement : MonoBehaviour
 	[SerializeField] private LayerMask _climbableLayer;
 	[SerializeField] private Vector3 _climbOffset;
 	[SerializeField] private float _climbSpeed;
+	[SerializeField] private Transform _character;
 	
 	[Header("Glide")]
 	[SerializeField] private float _glideSpeed;
@@ -50,7 +51,10 @@ public class PlayerMovement : MonoBehaviour
 	[Header("Camera")]
 	[SerializeField] private Transform _cameraTransform;
 	[SerializeField] private CameraManager _cameraManager;
-	
+
+	[Header("Checkpoint")]
+    [SerializeField] private Transform _lastCheckpoint;
+
 	//Movement
 	private float _speed;
 	private float _rotationSmoothVelocity;
@@ -159,8 +163,10 @@ public class PlayerMovement : MonoBehaviour
 			Vector3 horizontal = axisDirection.x * transform.right;
 			Vector3 vertical = axisDirection.y * transform.up;
 			movementDirection = horizontal + vertical;
-			//Debug.Log("Horizontal: " + horizontal + " Vertical" + vertical);
-			_rigidbody.AddForce(movementDirection * (Time.deltaTime * _climbSpeed));
+			//_rigidbody.AddForce(movementDirection * (Time.deltaTime * _climbSpeed));
+			// memaksa player tetap menempel pada tembok
+			Vector3 front = _character.forward;
+			_rigidbody.AddForce(front * (Time.deltaTime * _climbSpeed));
 			PlayerEventManager.FireOnAnimationClimb(axisDirection);
 		}
 		else if (isPlayerGliding)
@@ -240,10 +246,15 @@ public class PlayerMovement : MonoBehaviour
 		bool isNotClimbing = _playerStance != PlayerStance.Climb;
 		if (isInFrontOfClimbingWall && _isGrounded && isNotClimbing && _playerStance != PlayerStance.Crouch)
 		{
-			Vector3 offset = (transform.forward * _climbOffset.z) + (Vector3.up * _climbOffset.y);
-			transform.position = hit.point - offset;
 			//Supaya player tetap sejajar dengan permukaan "Climbable Wall" ketika memanjat
 			transform.rotation = Quaternion.LookRotation(-hit.normal);
+			// Vector3 climbablePoint = hit.collider.bounds.ClosestPoint(transform.position);
+			// Vector3 direction = (climbablePoint - transform.position).normalized;
+			// direction.y = 0;
+			// transform.rotation = Quaternion.LookRotation(direction);
+			
+			Vector3 offset = (transform.forward * _climbOffset.z) + (Vector3.up * _climbOffset.y);
+			transform.position = hit.point - offset;
 			_playerStance = PlayerStance.Climb;
 			_rigidbody.useGravity = false;
 			_cameraManager.SetFPSClampedCamera(true, transform.rotation.eulerAngles);
@@ -252,7 +263,7 @@ public class PlayerMovement : MonoBehaviour
 			//_collider.center = Vector3.up * 1.3f;
 			_animator.applyRootMotion = true;
 			_startClimbPosition = transform.position.z;
-			_rigidbody.drag = 2f;
+			//_rigidbody.drag = 2.5f;
 		}
 	}
 
@@ -287,7 +298,7 @@ public class PlayerMovement : MonoBehaviour
 	}
 
 	//cek apakah player berada di tunnel ketika sedang crouch
-	private void OnTriggerEnter(Collider collider)
+	private void OnTriggerStay(Collider collider)
 	{
 		if (collider.gameObject.layer == 3 || collider.gameObject.layer == 0)
 		{
@@ -404,8 +415,23 @@ public class PlayerMovement : MonoBehaviour
 		{
 			if (hitObjects[i] != null)
 			{
+				PlayerEventManager.FireOnObjectBreaking();
 				Destroy(hitObjects[i].gameObject);
 			}
 		}
 	}
+
+	public void ResetPositionToCheckpoint()
+	{
+		if (_lastCheckpoint != null)
+		{
+			transform.position = _lastCheckpoint.position;
+            transform.rotation = _lastCheckpoint.rotation;
+		}
+	}
+	
+	public void SetCheckpoint(Transform checkpoint)
+    {
+        _lastCheckpoint = checkpoint;
+    }
 }

@@ -62,7 +62,8 @@ public class PlayerAnimationController : MonoBehaviour
 		if (_animator.applyRootMotion)
 		{
 			Vector3 deltaPosition = _animator.deltaPosition;
-			deltaPosition.z = 0;
+			// deltaPosition.z = 0;
+			// deltaPosition.x = 0;
 			transform.position += deltaPosition;
 			transform.rotation *= _animator.deltaRotation;
 		}

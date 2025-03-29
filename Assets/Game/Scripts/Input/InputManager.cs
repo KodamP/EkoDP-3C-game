@@ -21,8 +21,6 @@ public class InputManager : MonoBehaviour
 	{
 		float verticalAxis = Input.GetAxis("Vertical");
 		float horizontalAxis = Input.GetAxis("Horizontal");
-		//Debug.Log("Vertical Axis: " + verticalAxis);
-		//Debug.Log("Horizontal Axis: " + horizontalAxis);
 		Vector2 inputAxis = new Vector2(horizontalAxis, verticalAxis);
 		InputEventManager.FireOnMoveInput(inputAxis);
 	}

@@ -5,7 +5,7 @@ public class MainMenuManager : MonoBehaviour
 {
     public void Play()
     {
-        SceneManager.LoadScene("Blockout");
+        SceneManager.LoadScene("IslandLevel");
     }
 
     public void Exit()

@@ -8,6 +8,8 @@ public class PlayerAudioManager : MonoBehaviour
     [SerializeField] private AudioSource _punchSFX;
     [SerializeField] private AudioSource _glideSFX;
     [SerializeField] private AudioSource _landingSFX;
+    [SerializeField] private AudioSource _breakSFX;
+    private float _comboTimer;
 
     [Header("Sfx")]
     [SerializeField] private float _resetComboInterval;
@@ -16,6 +18,7 @@ public class PlayerAudioManager : MonoBehaviour
         InputEventManager.OnSprintInput += IsSprinting;
         PlayerEventManager.OnAudioGliding += GlideSFX;
         PlayerEventManager.OnAnimationPunch += CountPunch;
+        PlayerEventManager.OnObjectBreaking += PlayBreakSFX;
     }
 
     private void OnDestroy()
@@ -23,6 +26,7 @@ public class PlayerAudioManager : MonoBehaviour
         InputEventManager.OnSprintInput -= IsSprinting;
         PlayerEventManager.OnAudioGliding -= GlideSFX;
         PlayerEventManager.OnAnimationPunch -= CountPunch;
+        PlayerEventManager.OnObjectBreaking -= PlayBreakSFX;
     }
 
     private bool _isSprint;
@@ -99,5 +103,10 @@ public class PlayerAudioManager : MonoBehaviour
     private void PlayLandingSFX()
     {
         _landingSFX.Play();
+    }
+
+    private void PlayBreakSFX()
+    {
+        _breakSFX.Play();
     }
 }
